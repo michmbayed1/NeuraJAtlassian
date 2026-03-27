@@ -10,7 +10,7 @@ CORS(app) # Open CORS for local development
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.route('/api/jira/analyze', methods=['POST'])
+@app.route('/', methods=['POST'])
 def analyze_jira():
     data = request.json
     site_url = data.get('url', '').rstrip('/')

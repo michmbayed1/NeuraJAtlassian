@@ -483,7 +483,7 @@
                 bar.style.width = '45%';
                 txt.innerText = 'Syncing Site Data...';
 
-                const res = await fetch('http://127.0.0.1:5000/api/jira/analyze', {
+                const res = await fetch('/api/jira/analyze', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ url, email, token })

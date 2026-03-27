@@ -1,22 +1,24 @@
-from flask import Flask, jsonify, request, render_template # Added render_template
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 import requests
 from requests.auth import HTTPBasicAuth
 import logging
+import os
 
-app = Flask(__name__)
+# Updated: Added template_folder='.' because index.html is now in the same folder as app.py
+app = Flask(__name__, template_folder='.')
 CORS(app) 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- 1. HOME ROUTE (This serves your HTML file) ---
+# --- 1. HOME ROUTE ---
 @app.route('/')
 def home():
-    # Flask looks for index.html inside the /templates folder automatically
+    # Flask will now look in the root folder instead of /templates
     return render_template('index.html')
 
-# --- 2. ANALYSIS ROUTE (Your Jira Logic) ---
+# --- 2. ANALYSIS ROUTE ---
 @app.route('/api/jira/analyze', methods=['POST'])
 def analyze_jira():
     data = request.json
@@ -134,5 +136,5 @@ def analyze_jira():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    # Render uses gunicorn, but this is fine for local testing
+    # Use 0.0.0.0 for hosting environments
     app.run(debug=True, host='0.0.0.0', port=5000)

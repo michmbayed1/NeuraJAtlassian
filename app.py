@@ -1,18 +1,28 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template # Added render_template
 from flask_cors import CORS
 import requests
 from requests.auth import HTTPBasicAuth
 import logging
 
 app = Flask(__name__)
-CORS(app) # Open CORS for local development
+CORS(app) 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.route('/', methods=['POST'])
+# --- 1. HOME ROUTE (This serves your HTML file) ---
+@app.route('/')
+def home():
+    # Flask looks for index.html inside the /templates folder automatically
+    return render_template('index.html')
+
+# --- 2. ANALYSIS ROUTE (Your Jira Logic) ---
+@app.route('/api/jira/analyze', methods=['POST'])
 def analyze_jira():
     data = request.json
+    if not data:
+        return jsonify({"status": "error", "message": "No data provided"}), 400
+        
     site_url = data.get('url', '').rstrip('/')
     email = data.get('email')
     token = data.get('token')
@@ -24,7 +34,7 @@ def analyze_jira():
     session.auth = HTTPBasicAuth(email, token)
     
     try:
-        # --- 1. ADD-ONS (NO LIMIT) ---
+        # --- 1. ADD-ONS ---
         session.headers.update({"Accept": "application/vnd.atl.plugins.installed+json", "X-Atlassian-Token": "nocheck"})
         addon_res = session.get(f"{site_url}/rest/plugins/1.0/?os_authType=basic", timeout=20)
         installed_apps = []
@@ -37,7 +47,7 @@ def analyze_jira():
                 "version": a.get('version', 'N/A')
             } for a in plugins if a.get('userInstalled')]
 
-        # --- 2. WORKFLOWS (NO LIMIT) ---
+        # --- 2. WORKFLOWS ---
         session.headers.update({"Accept": "application/json"})
         wf_res = session.get(f"{site_url}/rest/api/3/workflow/search", params={"expand": "statuses,transitions", "maxResults": 1000})
         workflow_data = []
@@ -52,7 +62,7 @@ def analyze_jira():
                     "intelligence": "High Complexity" if (steps > 10 or trans > 15) else "Optimized"
                 })
 
-        # --- 3. FIELDS (NO LIMIT - ALL CUSTOM FIELDS) ---
+        # --- 3. FIELDS ---
         field_res = session.get(f"{site_url}/rest/api/3/field")
         custom_fields = [f for f in (field_res.json() if field_res.status_code == 200 else []) if f.get('custom')]
         field_analysis = []
@@ -71,7 +81,7 @@ def analyze_jira():
                 "recommendation": "Active" if screens > 0 else "Inactive"
             })
 
-        # --- 4. PROJECTS (NO LIMIT) ---
+        # --- 4. PROJECTS ---
         proj_res = session.get(f"{site_url}/rest/api/3/project/search", params={"expand": "insight", "maxResults": 1000})
         project_list = []
         total_issues = 0
@@ -85,7 +95,7 @@ def analyze_jira():
                     "last_updated": insight.get('lastIssueUpdateTime', 'N/A')[:10]
                 })
 
-        # --- 5. USERS (PAGINATED - NO LIMIT) ---
+        # --- 5. USERS ---
         user_count = 0
         start_at = 0
         page_size = 50
@@ -94,11 +104,8 @@ def analyze_jira():
             if u_res.status_code != 200: break
             users = u_res.json()
             if not users: break
-            
-            # Count active human accounts
             active_batch = [u for u in users if u.get('accountType') == 'atlassian' and u.get('active')]
             user_count += len(active_batch)
-            
             if len(users) < page_size: break
             start_at += page_size
 
@@ -127,4 +134,5 @@ def analyze_jira():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Render uses gunicorn, but this is fine for local testing
+    app.run(debug=True, host='0.0.0.0', port=5000)

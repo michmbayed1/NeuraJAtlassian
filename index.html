@@ -663,7 +663,7 @@
 
     try {
         updateNeuralLoader(true, 'Syncing Site Data...', 45);
-        const res = await fetch('http://127.0.0.1:5000/api/jira/analyze', {
+        const res = await fetch('/api/jira/analyze', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ url, email, token })
@@ -779,7 +779,7 @@
             tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--accent);">Neural Scanning Automations...</td></tr>';
             updateNeuralLoader(true, "Scanning Automation Intelligence...", 60);
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/jira/automation', {
+                const res = await fetch('/api/jira/automation', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(currentCredentials)

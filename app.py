@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 from requests.auth import HTTPBasicAuth
@@ -7,7 +7,7 @@ import base64
 import json
 from datetime import datetime
 
-app = Flask(__name__, template_folder='.')
+app = Flask(__name__)
 CORS(app) # Open CORS for local development
 
 # Configure logging
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 def home():
     # Flask will now look in the root folder instead of /templates
     return render_template('index.html')
+
 
 # --- UTILITY: GET CLOUD ID ---
 def get_cloud_id(site_url, email, token):

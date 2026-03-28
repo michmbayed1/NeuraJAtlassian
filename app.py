@@ -7,7 +7,7 @@ import base64
 import json
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 CORS(app) # Open CORS for local development
 
 # Configure logging
